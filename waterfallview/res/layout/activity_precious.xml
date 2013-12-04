@@ -5,22 +5,8 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity" >
 
-    <RelativeLayout
-        android:id="@+id/topbar"
-        android:layout_width="fill_parent"
-        android:background="#FFFFFF"
-        android:layout_height="wrap_content" >
-
-        <ImageView
-            android:id="@+id/precious"
-            android:layout_width="32dip"
-            android:layout_height="32dip"
-            android:layout_alignParentRight="true"
-            android:src="@drawable/heart_128" />
-    </RelativeLayout>
-
     <com.huewu.pla.lib.MultiColumnListView
-        android:id="@+id/listView"
+        android:id="@+id/preciousView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_below="@id/topbar"

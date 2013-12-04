@@ -11,19 +11,22 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
 
 import com.android.volley.Request;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.liyun.waterfallView.R;
 import com.huewu.pla.lib.MultiColumnListView;
 import com.huewu.pla.lib.internal.PLA_AbsListView;
 import com.huewu.pla.lib.internal.PLA_AbsListView.OnScrollListener;
+import com.liyun.waterfallView.R;
 import com.liyun.waterfallView.adapter.BeautyImageLoaderAdapter;
 import com.liyun.waterfallView.tool.VolleyTool;
 
@@ -34,7 +37,7 @@ import com.liyun.waterfallView.tool.VolleyTool;
  * @author chen
  * 
  */
-public class ImageLoaderActivity extends Activity implements OnScrollListener {
+public class ImageLoaderActivity extends Activity implements OnScrollListener,OnClickListener {
 	private MultiColumnListView listView;
 	private List<String> urlList = new LinkedList<String>();
 	private long lastid = 0l; // 上次请求到的图片时间戳
@@ -69,6 +72,8 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener {
 		jsonObjectRequest.setTag(ImageLoaderActivity.class.getSimpleName());// 设置tag
 																			// cancelAll的时候使用
 		VolleyTool.getInstance(this).getmRequestQueue().add(jsonObjectRequest);
+		
+		findViewById(R.id.precious).setOnClickListener(this);
 	}
 
 	@Override
@@ -209,5 +214,18 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener {
 			adpater.notifyDataSetChanged();
 		}
 
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.precious:
+			Intent i = new Intent(this, MyPreciousActivity.class);
+			startActivity(i);
+			break;
+
+		default:
+			break;
+		}		
 	}
 }
