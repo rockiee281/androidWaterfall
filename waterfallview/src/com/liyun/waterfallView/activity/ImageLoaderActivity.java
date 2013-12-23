@@ -11,12 +11,9 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
 
 import com.android.volley.Request;
 import com.android.volley.Response.ErrorListener;
@@ -28,6 +25,7 @@ import com.huewu.pla.lib.internal.PLA_AbsListView;
 import com.huewu.pla.lib.internal.PLA_AbsListView.OnScrollListener;
 import com.liyun.waterfallView.R;
 import com.liyun.waterfallView.adapter.BeautyImageLoaderAdapter;
+import com.liyun.waterfallView.pojo.ImageInfo;
 import com.liyun.waterfallView.tool.VolleyTool;
 
 /**
@@ -37,30 +35,31 @@ import com.liyun.waterfallView.tool.VolleyTool;
  * @author chen
  * 
  */
-public class ImageLoaderActivity extends Activity implements OnScrollListener,OnClickListener {
+public class ImageLoaderActivity extends Activity implements OnScrollListener {
 	private MultiColumnListView listView;
-	private List<String> urlList = new LinkedList<String>();
+	private List<ImageInfo> urlList = new LinkedList<ImageInfo>();
 	private long lastid = 0l; // 上次请求到的图片时间戳
-	public final static String BASE_URL = "http://cloud.dakele.com/api/gamecenter/l1/beauty?limit=10&offset=0";
+	public final static String BASE_URL = "http://cloud.dakele.com/api/gamecenter/l1/beauty_v2?limit=10&offset=0";
 	public final static String RAN_URL = "http://cloud.dakele.com/api/gamecenter/l1/beautyran?limit=10";
 	private boolean loadRandom = false; // 是否适用随机图片
 	private final LatestImageLoader lasetLoader = new LatestImageLoader();
 	private final RandomImageLoader ranLoader = new RandomImageLoader();
 	private BeautyImageLoaderAdapter adpater = null;
-	private int itemWidth = 0;
+	private int itemWidth = 216;
+	private boolean isLoading = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_imageloader);
-		int width = getWindowManager().getDefaultDisplay().getWidth();
-		itemWidth = (width - 4) / 3; // 随便写了个20 限定大小，不限定也可
+		// int width = getWindowManager().getDefaultDisplay().getWidth();
+		// itemWidth = (width - 4) / 3; // 随便写了个20 限定大小，不限定也可
 		adpater = new BeautyImageLoaderAdapter(this, urlList, itemWidth);
-		
+
 		listView = (MultiColumnListView) findViewById(R.id.listView);
 		listView.setAdapter(adpater);
 		listView.setOnScrollListener(this);
-		
+
 		lastid = getLastId();
 		String url = BASE_URL + "&lasttime=" + (lastid + 1);
 		// String url = BASE_URL + "&lasttime=" + (new Date().getTime() + 1);
@@ -72,8 +71,6 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 		jsonObjectRequest.setTag(ImageLoaderActivity.class.getSimpleName());// 设置tag
 																			// cancelAll的时候使用
 		VolleyTool.getInstance(this).getmRequestQueue().add(jsonObjectRequest);
-		
-		findViewById(R.id.precious).setOnClickListener(this);
 	}
 
 	@Override
@@ -97,7 +94,7 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 		// 当不滚动时
 		case OnScrollListener.SCROLL_STATE_IDLE:
 			// 判断滚动到底部
-			if (view.getLastVisiblePosition() == (view.getCount() - 1)) {
+			if (view.getLastVisiblePosition() == (view.getCount() - 1) && !isLoading) {
 				//
 				if (loadRandom) {
 					JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, RAN_URL, null,
@@ -113,6 +110,7 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 																						// cancelAll的时候使用
 					VolleyTool.getInstance(this).getmRequestQueue().add(jsonObjectRequest);
 				}
+				isLoading = true;
 			}
 			break;
 		}
@@ -132,6 +130,7 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 		@Override
 		public void onErrorResponse(VolleyError error) {
 			Log.e(TAG, error.toString());
+			isLoading = false;
 		}
 
 		@Override
@@ -139,6 +138,7 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 			JSONArray data = null;
 			try {
 				data = rsp.getJSONArray("data");
+				lastid = rsp.getLong("ts");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -155,22 +155,23 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 			}
 
 			// 更新listview
-			if (len % 2 != 0) {
-				Log.e(TAG, "格式错误！" + rsp.toString());
-				return;
-			}
-			for (int i = 0; i < len;) {
+			for (int i = 0; i < len; i++) {
 				try {
-					urlList.add(data.getString(i));
-					long imgId = data.getLong(i + 1);
-					lastid = imgId > lastid ? imgId : lastid;
-					i += 2;
+					JSONObject jsonObject = (JSONObject) data.get(i);
+					ImageInfo imageInfo = new ImageInfo();
+					imageInfo.setId((Integer) jsonObject.get("id"));
+					imageInfo.setColor((String) jsonObject.get("backgroud"));
+					imageInfo.setUrl((String) jsonObject.get("url"));
+					imageInfo.setWidth((Integer) jsonObject.get("width"));
+					imageInfo.setHeight((Integer) jsonObject.get("height"));
+					urlList.add(imageInfo);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 			adpater.notifyDataSetChanged();
 			setLastId(lastid);
+			isLoading = false;
 		}
 
 	}
@@ -183,6 +184,7 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 		@Override
 		public void onErrorResponse(VolleyError error) {
 			Log.e(TAG, error.toString());
+			isLoading = false;
 		}
 
 		@Override
@@ -205,27 +207,16 @@ public class ImageLoaderActivity extends Activity implements OnScrollListener,On
 			// 更新listview
 			for (int i = 0; i < len; i++) {
 				try {
-					urlList.add(data.getString(i));
+					// TODO
+					// urlList.add(data.getString(i));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 
 			adpater.notifyDataSetChanged();
+			isLoading = false;
 		}
-
 	}
 
-	@Override
-	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.precious:
-			Intent i = new Intent(this, MyPreciousActivity.class);
-			startActivity(i);
-			break;
-
-		default:
-			break;
-		}		
-	}
 }

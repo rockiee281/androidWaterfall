@@ -6,9 +6,11 @@ import java.util.List;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
@@ -16,16 +18,18 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.ImageLoader.ImageContainer;
 import com.android.volley.toolbox.ImageLoader.ImageListener;
+import com.android.volley.toolbox.NetworkImageView;
 import com.liyun.waterfallView.R;
 import com.liyun.waterfallView.activity.BeautyDetailActivity;
+import com.liyun.waterfallView.pojo.ImageInfo;
 import com.liyun.waterfallView.tool.VolleyTool;
 
 public class BeautyImageLoaderAdapter extends BaseAdapter {
 	private Context context;
-	private List<String> list;
+	private List<ImageInfo> list;
 	private int itemWidth = 0;
 
-	public BeautyImageLoaderAdapter(Context ctx, List<String> list, int itemWidth) {
+	public BeautyImageLoaderAdapter(Context ctx, List<ImageInfo> list, int itemWidth) {
 		this.context = ctx;
 		this.list = list;
 		this.itemWidth = itemWidth;
@@ -38,7 +42,7 @@ public class BeautyImageLoaderAdapter extends BaseAdapter {
 	}
 
 	@Override
-	public String getItem(int position) {
+	public ImageInfo getItem(int position) {
 		return list.get(position);
 	}
 
@@ -53,14 +57,15 @@ public class BeautyImageLoaderAdapter extends BaseAdapter {
 		if (convertView == null) {
 			convertView = LayoutInflater.from(context).inflate(R.layout.beautyimageloader_item, null);
 			holder = new NetWorkAdapterHolder();
-			holder.itemImage = (ImageView) convertView.findViewById(R.id.itemImage);
+			holder.itemImage = (NetworkImageView) convertView.findViewById(R.id.itemImage);
 			// holder.itemText = (TextView)
 			// convertView.findViewById(R.id.itemText);
 			convertView.setTag(holder);
 		} else {
 			holder = (NetWorkAdapterHolder) convertView.getTag();
 		}
-		final String originUrl = getItem(position);
+		ImageInfo imageInfo = getItem(position);
+		final String originUrl = imageInfo.getUrl();
 		String requestUlr = "";
 		try {
 			requestUlr = transImgUrl(originUrl, itemWidth);
@@ -80,13 +85,27 @@ public class BeautyImageLoaderAdapter extends BaseAdapter {
 			}
 		});
 		ImageLoader imageLoader = VolleyTool.getInstance(context).getmImageLoader();
-		if (!imageLoader.isCached(requestUlr, 0, 0)) { // 如果未缓存情况imageview，避免闪烁
-			holder.itemImage.setImageDrawable(null);
-		}
+		// if (!imageLoader.isCached(requestUlr, 0, 0)) { //
+		// 如果未缓存情况imageview，避免闪烁
+		// holder.itemImage.setImageDrawable(null);
+		// } else {
+		// holder.itemImage.setDefaultImageResId(android.R.drawable.ic_menu_rotate);
+		holder.itemImage.setBackgroundColor(Color.parseColor("#" + imageInfo.getColor()));
+		holder.itemImage.setErrorImageResId(android.R.drawable.ic_delete);
+		holder.itemImage.setImageUrl(requestUlr, imageLoader);
 
-		ImageListener listener = new BeautyImageListener(holder.itemImage, android.R.drawable.ic_menu_rotate,
-				android.R.drawable.ic_delete, requestUlr);
-		imageLoader.get(requestUlr, listener);
+		// 设置宽高
+		LayoutParams params = holder.itemImage.getLayoutParams();
+		params.height = imageInfo.getHeight() * itemWidth / imageInfo.getWidth();
+		params.width = itemWidth;
+		holder.itemImage.setLayoutParams(params);
+
+		// }
+
+		// ImageListener listener = new BeautyImageListener(holder.itemImage,
+		// android.R.drawable.ic_menu_rotate,
+		// android.R.drawable.ic_delete, requestUlr);
+		// imageLoader.get(requestUlr, listener);
 		return convertView;
 	}
 
@@ -101,7 +120,7 @@ public class BeautyImageLoaderAdapter extends BaseAdapter {
 	}
 
 	class NetWorkAdapterHolder {
-		ImageView itemImage;
+		NetworkImageView itemImage;
 		// TextView itemText;
 	}
 

@@ -9,7 +9,6 @@
         android:id="@+id/preciousView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_below="@id/topbar"
         pla:plaColumnNumber="3"
         pla:plaColumnPaddingLeft="2dp"
         pla:plaColumnPaddingRight="2dp"

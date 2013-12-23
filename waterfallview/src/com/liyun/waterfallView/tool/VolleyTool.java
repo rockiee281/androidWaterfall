@@ -5,7 +5,7 @@ import android.content.Context;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
-import com.liyun.waterfallView.cache.BitmapCache;
+import com.liyun.waterfallView.cache.BitmapLruCache;
 
 public class VolleyTool {
 	private static VolleyTool mInstance = null;
@@ -14,7 +14,7 @@ public class VolleyTool {
     
     private VolleyTool(Context context) {
     	mRequestQueue = Volley.newRequestQueue(context);
-    	mImageLoader = new ImageLoader(mRequestQueue, new BitmapCache());
+    	mImageLoader = new ImageLoader(mRequestQueue, new BitmapLruCache(context));
     }
     
     public static VolleyTool getInstance(Context context){
