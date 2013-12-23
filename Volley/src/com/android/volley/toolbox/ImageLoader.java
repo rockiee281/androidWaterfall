@@ -109,8 +109,7 @@ public class ImageLoader {
 	 * @param errorImageResId
 	 *            Error image resource ID to use, or 0 if it doesn't exist.
 	 */
-	public static ImageListener getImageListener(final ImageView view, final int defaultImageResId,
-			final int errorImageResId) {
+	public static ImageListener getImageListener(final ImageView view, final int defaultImageResId, final int errorImageResId) {
 		return new ImageListener() {
 			@Override
 			public void onErrorResponse(VolleyError error) {
@@ -128,6 +127,20 @@ public class ImageLoader {
 				}
 			}
 		};
+	}
+
+	public int getProgress(String requestUrl, int maxWidth, int maxHeight) {
+		final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
+		BatchedImageRequest request = mInFlightRequests.get(cacheKey);
+		if (request != null) {
+			// If it is, add this request to the list of listeners.
+			return request.getProgress();
+		}
+		return 100;
+	}
+
+	public int getProgress(String requestUrl) {
+		return getProgress(requestUrl, 0, 0);
 	}
 
 	/**
@@ -553,8 +566,7 @@ public class ImageLoader {
 	 *            The max-height of the output.
 	 */
 	private static String getCacheKey(String url, int maxWidth, int maxHeight) {
-		return new StringBuilder(url.length() + 12).append("#W").append(maxWidth).append("#H").append(maxHeight)
-				.append(url).toString();
+		return new StringBuilder(url.length() + 12).append("#W").append(maxWidth).append("#H").append(maxHeight).append(url).toString();
 	}
 
 }
